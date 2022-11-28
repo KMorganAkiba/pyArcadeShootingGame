@@ -1,7 +1,9 @@
 # Arcade type shooter game 
 
 from gettext import GNUTranslations
+from operator import le
 from optparse import TitledHelpFormatter
+from pydoc import cli
 from tkinter import W
 from turtle import colormode
 import pygame
@@ -25,9 +27,12 @@ level = 0
 points = 0
 total_shots = 0
 #Modes  0 = Freeplay, 1 = Accuracy, 2 = Timed
-mode = 1
+mode = 0
 ammo = 0
 counter = 1
+best_freeplay = 0
+best_accuracy = 0 
+best_timed = 0
 game_time = 0 
 time_remaining = 0 
 shot = False
@@ -36,9 +41,11 @@ accuracy = 0
 menu = True
 game_over = False
 pause = False
-menu_img = bgs.append(pygame.image.load(f'assets/menus/mainMenu.png'))
-game_over_img = bgs.append(pygame.image.load(f'assets/menus/gameOver.png'))
-pause_img = bgs.append(pygame.image.load(f'assets/menus/pause.png'))
+clicked = False
+write_values = False
+menu_img = pygame.image.load(f'assets/menus/mainMenu.png')
+game_over_img = pygame.image.load(f'assets/menus/gameOver.png')
+pause_img = pygame.image.load(f'assets/menus/pause.png')
 
 for i in range(1,4):
     bgs.append(pygame.image.load(f'assets/bgs/{i}.png'))
@@ -112,8 +119,7 @@ def check_shot(targets, coords):
                 points += 10 + 10 * (i ** 2)
                 target_shot += 1
                 # add sounds for enemy hit
-    accuracy = target_shot/ammo * -100
-    print (accuracy)
+        #accuracy = target_shot/ammo * -100
     return coords 
 
 def draw_score():
@@ -136,19 +142,58 @@ def draw_score():
     screen.blit(mode_text, (320, 741))
 
 def draw_menu():
-    global game_over, pause
+    global game_over, pause, mode, level, menu, game_time, total_shots, points, clicked
+    global ammo, time_remaining, write_valuesm, best_accuracy, best_freeplay, best_timed
     game_over = False
     pause = False
     screen.blit(menu_img, (0, 0))
     mouse_pos = pygame.mouse.get_pos()
     clicks = pygame.mouse.get_pressed()
-    #freeplay_button = pygame.draw.rect(screen, 'green', [170, 524, 260, 100], 3)
-    #ammo_button = 
-    #timed_button = 
-    #reset_button = 
+    freeplay_button = pygame.rect.Rect((170, 524), (260, 100))
+    screen.blit(font.render(f'{best_freeplay}', True, 'black'), (340, 580))
+    accuracy_button = pygame.rect.Rect((475, 524), (260, 100))
+    screen.blit(font.render(f'{best_accuracy}', True, 'black'), (650, 580))
+    timed_button = pygame.rect.Rect((170, 661), (260, 100))
+    screen.blit(font.render(f'{best_timed}', True, 'black'), (350, 710))
+    reset_button = pygame.rect.Rect((475, 661), (260, 100))
+    
+    if freeplay_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        mode = 0
+        level = 1
+        menu = False
+        game_time = 0
+        total_shots = 0 
+        points = 0 
+        clicked = True
+        
 
+    if accuracy_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        mode = 1
+        level = 1
+        menu = False
+        game_time = 0 
+        ammo = 81
+        total_shots = 0 
+        points = 0 
+        clicked = True
+        
+    
+    if timed_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        mode = 2
+        level = 1
+        menu = False
+        time_remaining = 30
+        game_time = 0
+        total_shots = 0 
+        points = 0 
+        clicked = True
+        
 
-
+    if reset_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        best_timed = 0
+        best_accuracy = 0
+        best_freeplay = 0 
+        write_values = True
 
 def draw_game_over():
     pass
@@ -205,7 +250,6 @@ while run:
         level = 0
         draw_pause()
 
-    
     if level == 1:
        target_box = draw_level(one_coords)
        one_coords = move_level(one_coords)
@@ -239,6 +283,9 @@ while run:
                 total_shots += 1
                 if mode == 1:
                     ammo -= 1
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and clicked:
+            clicked = False
+
     if level > 0:
         if target_box == [[],[],[]] and level < 3:
             level += 1
