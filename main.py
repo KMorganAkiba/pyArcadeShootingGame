@@ -1,6 +1,7 @@
 # Arcade type shooter game 
 
 from gettext import GNUTranslations
+from optparse import TitledHelpFormatter
 from tkinter import W
 from turtle import colormode
 import pygame
@@ -20,16 +21,24 @@ target_images = [[],[],[]]
 targets = {1: [10, 5, 3],
            2: [12, 8, 5],
            3: [16, 12, 8, 3]}
-level = 1
+level = 0
 points = 0
 total_shots = 0
 #Modes  0 = Freeplay, 1 = Accuracy, 2 = Timed
-mode = 0
+mode = 1
 ammo = 0
 counter = 1
 game_time = 0 
 time_remaining = 0 
 shot = False
+target_shot = 0
+accuracy = 0
+menu = True
+game_over = False
+pause = False
+menu_img = bgs.append(pygame.image.load(f'assets/menus/mainMenu.png'))
+game_over_img = bgs.append(pygame.image.load(f'assets/menus/gameOver.png'))
+pause_img = bgs.append(pygame.image.load(f'assets/menus/pause.png'))
 
 for i in range(1,4):
     bgs.append(pygame.image.load(f'assets/bgs/{i}.png'))
@@ -94,14 +103,17 @@ def draw_level(coords):
     return target_reacts
 
 def check_shot(targets, coords):
-    global points 
+    global points, target_shot, accuracy
     mouse_pos = pygame.mouse.get_pos()
     for i in range (len(targets)):
         for j in range(len(targets[i])):
             if targets[i][j].collidepoint(mouse_pos):
                 coords[i].pop(j)
                 points += 10 + 10 * (i ** 2)
-                # add sounds for enemy hit    
+                target_shot += 1
+                # add sounds for enemy hit
+    accuracy = target_shot/ammo * -100
+    print (accuracy)
     return coords 
 
 def draw_score():
@@ -118,11 +130,31 @@ def draw_score():
         mode_text = font.render(f'Freeplay', True, 'black')
     if mode == 1:
         mode_text = font.render(f'Ammo Remaining: {ammo}', True, 'black')
+        # mode_text = font.render(f'Accuracy: {accuracy:.2f} %', True, 'black')
     if mode == 2:
         mode_text = font.render(f'Time Remaining : {time_remaining}', True, 'black')
     screen.blit(mode_text, (320, 741))
 
+def draw_menu():
+    global game_over, pause
+    game_over = False
+    pause = False
+    screen.blit(menu_img, (0, 0))
+    mouse_pos = pygame.mouse.get_pos()
+    clicks = pygame.mouse.get_pressed()
+    #freeplay_button = pygame.draw.rect(screen, 'green', [170, 524, 260, 100], 3)
+    #ammo_button = 
+    #timed_button = 
+    #reset_button = 
 
+
+
+
+def draw_game_over():
+    pass
+
+def draw_pause():
+    pass
 
 # initialize starting enemy coordinates
 
@@ -162,6 +194,17 @@ while run:
     screen.fill('black')
     screen.blit(bgs[level - 1], (0,0))
     screen.blit(banners[level - 1], (0, HEIGHT - 200))
+
+    if menu:
+        level = 0
+        draw_menu()
+    if game_over: 
+        level = 0 
+        draw_game_over()
+    if pause:
+        level = 0
+        draw_pause()
+
     
     if level == 1:
        target_box = draw_level(one_coords)
