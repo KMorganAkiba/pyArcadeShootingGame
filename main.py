@@ -13,6 +13,7 @@ pygame.init()
 fps = 60
 timer = pygame.time.Clock()
 font = pygame.font.Font('assets/font/myFont.ttf', 32)
+big_font = pygame.font.Font('assets/font/myFont.ttf', 60)
 WIDTH = 900
 HEIGHT = 800
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
@@ -43,6 +44,7 @@ game_over = False
 pause = False
 clicked = False
 write_values = False
+new_coords = True
 menu_img = pygame.image.load(f'assets/menus/mainMenu.png')
 game_over_img = pygame.image.load(f'assets/menus/gameOver.png')
 pause_img = pygame.image.load(f'assets/menus/pause.png')
@@ -59,6 +61,13 @@ for i in range(1,4):
         for j in range(1,5):
             target_images[i - 1].append(pygame.transform.scale(
                 pygame.image.load(f'assets/targets/{i}/{j}.png'), (120 - (j * 18), 80 - (j * 12))))
+
+file = open('high_scores.txt', 'r')
+read_file = file.readlines()
+file.close()
+best_freeplay = int(read_file[0])
+best_accuracy = int(read_file[1])
+best_timed = int(read_file[2])
 
 def draw_gun():
     mouse_pos = pygame.mouse.get_pos()
@@ -142,8 +151,8 @@ def draw_score():
     screen.blit(mode_text, (320, 741))
 
 def draw_menu():
-    global game_over, pause, mode, level, menu, game_time, total_shots, points, clicked
-    global ammo, time_remaining, write_valuesm, best_accuracy, best_freeplay, best_timed
+    global game_over, pause, mode, level, menu, game_time, total_shots, points, clicked, write_values
+    global ammo, time_remaining, write_valuesm, best_accuracy, best_freeplay, best_timed, new_coords
     game_over = False
     pause = False
     screen.blit(menu_img, (0, 0))
@@ -165,7 +174,7 @@ def draw_menu():
         total_shots = 0 
         points = 0 
         clicked = True
-        
+        new_coords = True
 
     if accuracy_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
         mode = 1
@@ -176,8 +185,8 @@ def draw_menu():
         total_shots = 0 
         points = 0 
         clicked = True
-        
-    
+        new_coords = True
+         
     if timed_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
         mode = 2
         level = 1
@@ -187,8 +196,8 @@ def draw_menu():
         total_shots = 0 
         points = 0 
         clicked = True
+        new_coords = True
         
-
     if reset_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
         best_timed = 0
         best_accuracy = 0
@@ -196,32 +205,52 @@ def draw_menu():
         write_values = True
 
 def draw_game_over():
-    pass
+    global clicked, level, pause, game_over, menu, points, total_shots, game_time, time_remaining 
+    if mode == 0:
+        display_score = game_time
+    else:
+        display_score = points
+    screen.blit(game_over_img, (0, 0))
+    mouse_pos = pygame.mouse.get_pos()
+    clicks = pygame.mouse.get_pressed()
+    exit_button = pygame.rect.Rect((170, 661), (260, 100))
+    menu_button = pygame.rect.Rect((475, 661), (260, 100))
+    screen.blit(big_font.render(f'{display_score}', True, 'black'), (650, 570))
+    if menu_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        clicked = True
+        level = 0 
+        pause = False
+        game_over = False
+        menu = True
+        points = 0
+        total_shots = 0
+        game_time = 0
+        time_remaining = 0
+    if exit_button.collidepoint(mouse_pos) and clicks[0] and not clicked: 
+        global run
+        run = False   
 
 def draw_pause():
-    pass
-
-# initialize starting enemy coordinates
-
-one_coords = [[],[],[]]
-two_coords = [[],[],[]]
-three_coords = [[],[],[],[]]
-
-for i in range (3):
-    my_list = targets[1]
-    for j in range (my_list[i]):
-        one_coords[i].append((WIDTH//(my_list[i]) * j, 300 - ( i * 150) + 30 * (j % 2)))
-
-for i in range (3):
-    my_list = targets[2]
-    for j in range (my_list[i]):
-        two_coords[i].append((WIDTH//(my_list[i]) * j, 300 - ( i * 150) + 30 * (j % 2)))
-
-for i in range (4):
-    my_list = targets[3]
-    for j in range (my_list[i]):
-        three_coords[i].append((WIDTH//(my_list[i]) * j, 300 - ( i * 100) + 30 * (j % 2)))
-
+    global level, pause, menu, points, total_shots, game_time, time_remaining, clicked, new_coords
+    screen.blit(pause_img, (0, 0))
+    mouse_pos = pygame.mouse.get_pos()
+    clicks = pygame.mouse.get_pressed()
+    resume_button = pygame.rect.Rect((170, 661), (260, 100))
+    menu_button = pygame.rect.Rect((475, 661), (260, 100))
+    if resume_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        level = resume_level
+        pause = False
+        clicked = True
+    if menu_button.collidepoint(mouse_pos) and clicks[0] and not clicked:
+        level = 0
+        pause = False
+        menu = True
+        points = 0
+        total_shots = 0
+        game_time = 0
+        time_remaining = 0
+        clicked = True
+        new_coords = True
 
 run = True
 while run:
@@ -235,6 +264,25 @@ while run:
             game_time += 1
             if mode == 2:
                 time_remaining -= 1
+
+    if new_coords:
+        # initialize starting enemy coordinates
+        one_coords = [[],[],[]]
+        two_coords = [[],[],[]]
+        three_coords = [[],[],[],[]]
+        for i in range (3):
+            my_list = targets[1]
+            for j in range (my_list[i]):
+                one_coords[i].append((WIDTH//(my_list[i]) * j, 300 - ( i * 150) + 30 * (j % 2)))
+        for i in range (3):
+            my_list = targets[2]
+            for j in range (my_list[i]):
+                two_coords[i].append((WIDTH//(my_list[i]) * j, 300 - ( i * 150) + 30 * (j % 2)))
+        for i in range (4):
+            my_list = targets[3]
+            for j in range (my_list[i]):
+                three_coords[i].append((WIDTH//(my_list[i]) * j, 300 - ( i * 100) + 30 * (j % 2)))
+        new_coords = False
 
     screen.fill('black')
     screen.blit(bgs[level - 1], (0,0))
@@ -283,13 +331,41 @@ while run:
                 total_shots += 1
                 if mode == 1:
                     ammo -= 1
+            if (670 < mouse_position[0] < 860) and (660 < mouse_position[1] < 715):
+                resume_level = level
+                pause = True
+                clicked = True
+            if (670 < mouse_position[0] < 860) and  (715 < mouse_position[1] < 760):
+                resume_level = level
+                menu = True
+                clicked = True
+                new_coords = True
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and clicked:
             clicked = False
 
     if level > 0:
         if target_box == [[],[],[]] and level < 3:
             level += 1
+        if (level == 3 and target_box == [[], [], [], []]) or (mode == 1 and ammo == 0) or (mode == 2 and time_remaining == 0):
+            new_coords = True
+            if mode == 0:
+                if game_time < best_freeplay or best_freeplay == 0:
+                    best_freeplay = game_time
+                    write_values = True
+            if mode == 1:
+                if points > best_accuracy:
+                    best_accuracy = points
+                    write_values = True
+            if mode == 2: 
+                if points > best_timed:
+                    best_timed = points
+                    write_values = True 
+            game_over = True
 
-
+    if write_values: 
+        file = open('high_scores.txt', 'w')
+        file.write(f'{best_freeplay}\n{best_accuracy}\n{best_timed}')
+        file.close
+        write_values = False
     pygame.display.flip()
 pygame.quit()
