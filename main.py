@@ -69,6 +69,18 @@ best_freeplay = int(read_file[0])
 best_accuracy = int(read_file[1])
 best_timed = int(read_file[2])
 
+pygame.mixer.init()
+pygame.mixer.music.load('assets/sounds/bg_music.mp3')
+plate_sound = pygame.mixer.Sound('assets/sounds/Broken plates.wav')
+plate_sound.set_volume(.2)
+bird_sound = pygame.mixer.Sound('assets/sounds/Drill Gear.mp3')
+bird_sound.set_volume(.2)
+laser_sound = pygame.mixer.Sound('assets/sounds/Laser Gun.wav')
+laser_sound.set_volume(.4)
+pygame.mixer.music.play()
+
+
+
 def draw_gun():
     mouse_pos = pygame.mouse.get_pos()
     gun_point = (WIDTH/2, HEIGHT - 200)
@@ -127,8 +139,14 @@ def check_shot(targets, coords):
                 coords[i].pop(j)
                 points += 10 + 10 * (i ** 2)
                 target_shot += 1
-                # add sounds for enemy hit
-        #accuracy = target_shot/ammo * -100
+                accuracy = target_shot/total_shots * 100
+                print(accuracy)
+                if level == 1:
+                    bird_sound.play()
+                elif level == 2:
+                    plate_sound.play()
+                elif level == 3:
+                    laser_sound.play()
     return coords 
 
 def draw_score():
@@ -144,7 +162,7 @@ def draw_score():
     if mode == 0:
         mode_text = font.render(f'Freeplay', True, 'black')
     if mode == 1:
-        mode_text = font.render(f'Ammo Remaining: {ammo}', True, 'black')
+        mode_text = font.render(f'Ammo left: {ammo}, {accuracy:.2f}%', True, 'black')
         # mode_text = font.render(f'Accuracy: {accuracy:.2f} %', True, 'black')
     if mode == 2:
         mode_text = font.render(f'Time Remaining : {time_remaining}', True, 'black')
@@ -336,8 +354,8 @@ while run:
                 pause = True
                 clicked = True
             if (670 < mouse_position[0] < 860) and  (715 < mouse_position[1] < 760):
-                resume_level = level
                 menu = True
+                pygame.mixer.music.play()
                 clicked = True
                 new_coords = True
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and clicked:
@@ -348,6 +366,7 @@ while run:
             level += 1
         if (level == 3 and target_box == [[], [], [], []]) or (mode == 1 and ammo == 0) or (mode == 2 and time_remaining == 0):
             new_coords = True
+            pygame.mixer.music.play()
             if mode == 0:
                 if game_time < best_freeplay or best_freeplay == 0:
                     best_freeplay = game_time
